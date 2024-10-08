@@ -1,135 +1,145 @@
 #ifndef __WSERIAL_H
 #define __WSERIAL_H
+
 #include <Arduino.h>
-#include <AsyncTelnet.h>
+#include "ESPTelnet.h"
 
 #define BAUD_RATE 115200
-#define NEWLINE "\r\n"
-
-class WSerial_c
+class WSerial_c : public ESPTelnet
 {
-protected:
-  uint16_t server_port = 0;
-  AsyncTelnet *_telnet;
-  bool isClientConnected;
-  std::function<void(std::string)> on_input;
-  void start(uint16_t port, unsigned long baudrate = BAUD_RATE);
-  void update();  
+protected: 
+  //uint16_t server_port = 0;
+  void update(void);
+  bool start(uint16_t port, unsigned long baudrate = BAUD_RATE);
 
 public:
-  uint16_t serverPort() { return (server_port); }
-  void stop();
-  friend inline void startWSerial(WSerial_c *ws,uint16_t port, unsigned long baudrate = BAUD_RATE);
-  friend inline void updateWSerial(WSerial_c *ws);   
-
+  WSerial_c() : ESPTelnet() {};
   template <typename T>
-  void print(const T &data);
-
-  template <typename T>
-  void println(const T &data);
-  void println();
-
-  template <typename T>
-  void plot(const char *varName, TickType_t x, T y, const char *unit = NULL);
+  void plot(const char *varName, T x, T y, const char *unit = NULL);
   template <typename T>
   void plot(const char *varName, T y, const char *unit = NULL);
+  template <typename T>
+  void print(const T &data);
+  template <typename T>
+  void print(const T &data, int base);
+  void println();
+  template <typename T>
+  void println(const T &data);
+  template <typename T>
+  void println(const T &data, int base);
 
-  void onInputReceived(std::function<void(std::string)> callback);
+  
+  friend inline bool startWSerial(WSerial_c *ws,uint16_t port, unsigned long baudrate = BAUD_RATE);
+  friend inline void updateWSerial(WSerial_c *ws); 
+  uint16_t serverPort() { return (this->server_port); }
+  bool isConnected();
 };
 
-void WSerial_c::stop()
+inline bool WSerial_c::isConnected()
 {
-  _telnet->stop();
+  return ((ESPTelnet *) this)->isConnected();
 }
 
-inline void startWSerial(WSerial_c *ws,uint16_t port, unsigned long baudrate){ws->start(port, baudrate);}
-void WSerial_c::start(uint16_t port, unsigned long baudrate)
+inline bool startWSerial(WSerial_c *ws,uint16_t port, unsigned long baudrate){return(ws->start(port, baudrate));}
+bool WSerial_c::start(uint16_t port, unsigned long baudrate)
 {
-  if (isClientConnected)
-  {
-    _telnet->stop();
-    delete (_telnet);
-  }
-  isClientConnected = false;
+  if(isConnected()) ((ESPTelnet *) this)->stop();
   server_port = port;
-  Serial.begin(baudrate);
-  _telnet = new AsyncTelnet(server_port);
-  Serial.println();
-  _telnet->onConnect([=](void *, AsyncClient *client)
-                     {
-            Serial.println("\nClient connected");
-            isClientConnected = true; });
+  onDisconnect([](String ip)
+               {
+        Serial.print("- Telnet: ");
+        Serial.print(ip);
+        Serial.println(" disconnected"); });
+  onConnectionAttempt([](String ip)
+                      {
+        Serial.print("- Telnet: ");
+        Serial.print(ip);
+        Serial.println(" tried to connected"); });
+  onReconnect([](String ip)
+              {
+        Serial.print("- Telnet: ");
+        Serial.print(ip);
+        Serial.println(" reconnected"); });
 
-  _telnet->onDisconnect([=](AsyncClient *client)
-                        {
-            Serial.println("\nClient disconnected");
-            isClientConnected = false; });
-
-  _telnet->onIncomingData([=](const std::string &data)
-                          { print(data.c_str()); });
-  _telnet->begin(false, false);
-  println();
+  return (((ESPTelnet *) this)->begin(server_port));
 }
 
 inline void updateWSerial(WSerial_c *ws) {ws->update();}
-void WSerial_c::update() {
-  if(!isClientConnected) {
-    if(Serial.available()) {
-      on_input(std::string((Serial.readStringUntil('\n')).c_str()));
+void WSerial_c::update(void)
+{
+  if (isConnected())
+  {
+    if (Serial.available() && on_input != NULL)
+    {
+      on_input(Serial.readStringUntil('\n'));
     }
   }
+  ((ESPTelnet *) this)->loop();
 }
 
 template <typename T>
 void WSerial_c::plot(const char *varName, T y, const char *unit)
 {
-  plot(varName,(TickType_t) xTaskGetTickCount(), y, unit);
+  plot(varName, (T)millis(), y, unit);
 }
 template <typename T>
-void WSerial_c::plot(const char *varName, TickType_t x, T y, const char *unit)
+void WSerial_c::plot(const char *varName, T x, T y, const char *unit)
 {
-  String str(">");
-  str.concat(varName);
-  str.concat(":");
-  str.concat(x);
-  str.concat(":");
-  str.concat(y);
-  str.concat(unit != NULL ? "§" : "");
-  str.concat(unit != NULL ? unit : "");  
-  str.concat("|g");
-  println(str);
+  print(">"); // Inicio de envio de dados para um gráfico.
+  print(varName);
+  print(":");
+  print(x);
+  print(":");
+  print(y);
+  if (unit != NULL)
+  {
+    print("§"); // Unidade na sequência
+    print(unit);
+  }
+  println("|g"); // Modo Grafico
 }
 
 template <typename T>
 void WSerial_c::print(const T &data)
 {
-  if (isClientConnected)
-    _telnet->write(String(data).c_str());
+  if (((ESPTelnet *) this)->isConnected())
+    ((ESPTelnet *) this)->print(data);  
   else
-    Serial.print(data);
+    Serial.print(data);  
+}
+
+template <typename T>
+void WSerial_c::print(const T &data, int base)
+{
+  if (((ESPTelnet *) this)->isConnected())
+    ((ESPTelnet *) this)->print(data, base);  
+  else
+    Serial.print(data, base);  
 }
 
 template <typename T>
 void WSerial_c::println(const T &data)
 {
-  String str(data);
-  str.concat(NEWLINE);
-  print(str);
+  if (((ESPTelnet *) this)->isConnected())
+    ((ESPTelnet *) this)->println(data);  
+  else
+    Serial.println(data);  
 }
+
+template <typename T>
+void WSerial_c::println(const T &data, int base)
+{
+  if (((ESPTelnet *) this)->isConnected())
+    ((ESPTelnet *) this)->println(data, base);  
+  else
+    Serial.println(data, base);  
+}
+
 void WSerial_c::println()
 {
-  if (isClientConnected)
-  {
-    _telnet->write(NEWLINE);
-  }
+  if (((ESPTelnet *) this)->isConnected())
+    ((ESPTelnet *) this)->println();  
   else
     Serial.println();
 }
-
-void WSerial_c::onInputReceived(std::function<void(std::string)> callback)
-{
-  _telnet->onIncomingData(callback);
-  on_input = callback;
-}
-
 #endif
