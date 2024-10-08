@@ -2,7 +2,6 @@
 #include <Arduino.h>
 
 #define TRMNivel def_pin_R4a20_1
-#define TRMVazao def_pin_R4a20_2
 #define MOTBomba def_pin_RELE
 #define CHNivel def_pin_D1
 #define POSValvula 0
@@ -37,7 +36,7 @@ void monitora4A20(void)
     if (++count >= 20)
     {
       vlR4a20_1 = vlR4a20_1 / count;
-      IIKit.disp.setText(3, ("T1:" + String(vlR4a20_1)).c_str());
+      IIKit.disp.setText(3, ("T1:" + String(0.00492273*vlR4a20_1 + 0.71001823)).c_str());
       IIKit.WSerial.plot("vlR4a20_1", vlR4a20_1);
       count = 0;
       vlR4a20_1 = 0.0;
