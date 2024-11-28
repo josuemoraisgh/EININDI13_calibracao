@@ -13,18 +13,19 @@
 
 #include "util/asyncDelay.h"
 #include "util/din.h"
+#include "services/ads1115_c.h"
 
 /********** POTENTIOMETERS GPIO define *****/
-#define def_pin_POT1 36 // GPIO36
-#define def_pin_POT2 39 // GPIO39
+// #define def_pin_POT1 36 // GPIO36
+// #define def_pin_POT2 39 // GPIO39
 /***************** Read 4@20 mA ***********/
-#define def_pin_R4a20_1 35 // GPIO35
-#define def_pin_R4a20_2 34 // GPIO34
+// #define def_pin_R4a20_1 35 // GPIO35
+// #define def_pin_R4a20_2 34 // GPIO34
 /********************* ADC ****************/
 #define def_pin_ADC1 32 // GPIO32
 /******************** Digitais **************/
-#define def_pin_D1 13 // GPIO13 - Não funciona como entrada analogica somente digital
-#define def_pin_D2 14 // GPIO14  - Não funciona como entrada analogica somente digital
+#define def_pin_D1 35 // GPIO13 - Não funciona como entrada analogica somente digital
+#define def_pin_D2 34 // GPIO14 - Não funciona como entrada analogica somente digital
 #define def_pin_D3 27 // GPIO37 - Não funciona como entrada analogica somente digital
 #define def_pin_D4 33 // GPIO33 - Não funciona como entrada analogica somente digital
 /********************* DAC ****************/
@@ -35,12 +36,12 @@
 #define def_pin_RELE 23 // GPIO23
 /***************** OLED Display ************/
 #define def_pin_SDA 21 // GPIO21
-#define def_pin_SCL 5  // GPIO5
+#define def_pin_SCL 22 // GPIO5
 /********************* PWM ****************/
-#define def_pin_PWM 12 // GPIO12
+#define def_pin_PWM 36 // GPIO12
 /************* BUTTONS GPIO define *********/
-#define def_pin_RTN1 15  // GPIO15
-#define def_pin_RTN2 2   // GPIO18
+#define def_pin_RTN1 18  // GPIO15
+#define def_pin_RTN2 2   // GPIO2
 #define def_pin_PUSH1 16 // GPIO16
 #define def_pin_PUSH2 17 // GPIO17
 
@@ -50,7 +51,8 @@ class IIKit_c
 private:
     char DDNSName[15] = "inindkit";
     WifiManager_c wm;
-    void errorMsg(String error, bool restart = true);    
+    ADS1115_c ads;
+    void errorMsg(String error, bool restart = true);
 
 public:
     DIn_c rtn_1;
@@ -58,10 +60,15 @@ public:
     DIn_c push_1;
     DIn_c push_2;
     Display_c disp;
-    WSerial_c WSerial;    
-    // HartUdp_c ds8500Serial(4000);    
+    WSerial_c WSerial;
+    // HartUdp_c ds8500Serial(4000);
     void setup();
-    void loop(void);    
+    void loop(void);
+
+    uint16_t analogReadPot1(void);
+    uint16_t analogReadPot2(void);
+    uint16_t analogRead4a20_1(void);
+    uint16_t analogRead4a20_2(void);
 };
 
 inline void IIKit_c::setup()
@@ -78,10 +85,10 @@ inline void IIKit_c::setup()
     delay(50);
     /*************** READ EEPROM *************/
     EEPROM.begin(1);
-    char idKit[2] = "0";
+    char idKit[2] = "2";
     /*************** Write EEPROM ************/
-    // EEPROM.write(0,(uint8_t) idKit[0]);
-    // EEPROM.commit();
+    EEPROM.write(0,(uint8_t) idKit[0]);
+    EEPROM.commit();
     /********** Initializes with kit id ******/
     idKit[0] = (char)EEPROM.read(0); // id do kit utilizado
     strcat(DDNSName, idKit);
@@ -99,7 +106,7 @@ inline void IIKit_c::setup()
         WSerial.print("\nWifi running - IP:");
         WSerial.println(WiFi.localIP());
         disp.setFuncMode(false);
-        disp.setText(1, (WiFi.localIP().toString()+" ID:"+String(idKit[0])).c_str());
+        disp.setText(1, (WiFi.localIP().toString() + " ID:" + String(idKit[0])).c_str());
         disp.setText(2, DDNSName);
         disp.setText(3, "UFU Mode");
         delay(50);
@@ -108,12 +115,12 @@ inline void IIKit_c::setup()
         errorMsg("Wifi  error.\nAP MODE...", false);
 
     /************** Starting OTA *************/
-    OTA::start(DDNSName);// OTA tem que ser depois do wifi e wifiManager
+    OTA::start(DDNSName); // OTA tem que ser depois do wifi e wifiManager
     /*** Starting Telnet Mode in WSerial ****/
-    startWSerial(&WSerial,4000+String(idKit[0]).toInt());
+    startWSerial(&WSerial, 4000 + String(idKit[0]).toInt());
     /********** POTENTIOMETERS GPIO define *****/
-    pinMode(def_pin_POT1, ANALOG);
-    pinMode(def_pin_POT2, ANALOG);
+    // pinMode(def_pin_POT1, ANALOG);
+    // pinMode(def_pin_POT2, ANALOG);
     /************* BUTTONS GPIO define *********/
     pinMode(def_pin_RTN1, INPUT_PULLDOWN);
     pinMode(def_pin_RTN2, INPUT_PULLDOWN);
@@ -125,8 +132,8 @@ inline void IIKit_c::setup()
     pinMode(def_pin_D3, OUTPUT);
     pinMode(def_pin_D4, OUTPUT);
     /***************** Read 4@20 mA ***********/
-    pinMode(def_pin_R4a20_1, ANALOG);
-    pinMode(def_pin_R4a20_2, ANALOG);
+    // pinMode(def_pin_R4a20_1, ANALOG);
+    // pinMode(def_pin_R4a20_2, ANALOG);
     /********************* PWM ****************/
     pinMode(def_pin_PWM, OUTPUT);
     /********************* DAC ****************/
@@ -141,7 +148,7 @@ inline void IIKit_c::setup()
     rtn_1.setPin(def_pin_RTN1);
     rtn_2.setPin(def_pin_RTN2);
     push_1.setPin(def_pin_PUSH1);
-    push_2.setPin(def_pin_PUSH2); 
+    push_2.setPin(def_pin_PUSH2);
     /************ Web Portal ****************/
     push_1.setTimeOnPressed(3);
     push_1.onPressedWithTime([this]()
@@ -168,6 +175,11 @@ inline void IIKit_c::setup()
     analogWrite(def_pin_PWM, 0);
     analogWrite(def_pin_DAC1, 0);
     analogWrite(def_pin_W4a20_1, 0);
+
+    if (!ads.begin())
+    {
+        errorMsg("Wifi  error.\nAP MODE...", true);
+    }
 }
 
 void IIKit_c::loop(void)
@@ -175,11 +187,29 @@ void IIKit_c::loop(void)
     OTA::handle();
     updateWSerial(&WSerial);
     updateDisplay(&disp);
-    if (wm.getPortalRunning()) wm.process();
+    if (wm.getPortalRunning())
+        wm.process();
     updateDIn(&rtn_1);
     updateDIn(&rtn_2);
     updateDIn(&push_1);
-    updateDIn(&push_2);            
+    updateDIn(&push_2);
+}
+
+uint16_t IIKit_c::analogReadPot1(void)
+{
+    return ads.analogRead(1);
+}
+uint16_t IIKit_c::analogReadPot2(void)
+{
+    return ads.analogRead(0);
+}
+uint16_t IIKit_c::analogRead4a20_1(void)
+{
+    return ads.analogRead(3);
+}
+uint16_t IIKit_c::analogRead4a20_2(void)
+{
+    return ads.analogRead(2);
 }
 
 void IIKit_c::errorMsg(String error, bool restart)

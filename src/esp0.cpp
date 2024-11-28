@@ -15,9 +15,9 @@ void monitoraPOT(void)
   {
     delayPOT.repeat();
 
-    const uint16_t vlPOT1 = analogRead(def_pin_POT1);
+    const uint16_t vlPOT1 = IIKit.analogReadPot1();
     ledcWrite(IdCanalValvula, vlPOT1);
-    IIKit.disp.setText(2, ("P1:" + String(100.0 * vlPOT1 / 4096.0)).c_str());
+    IIKit.disp.setText(2, ("P1:" + String(vlPOT1)).c_str());
     IIKit.WSerial.plot("vlPOT1", vlPOT1);
   }
 }
@@ -32,7 +32,7 @@ void monitora4A20(void)
   {
     delay4A20.repeat();
 
-    vlR4a20_1 += analogRead(def_pin_R4a20_1);
+    vlR4a20_1 += IIKit.analogRead4a20_1();
     if (++count >= 20)
     {
       vlR4a20_1 = vlR4a20_1 / count;
