@@ -1,16 +1,16 @@
 <circuit version="" rev="1751" stepSize="1000000" stepsPS="1000000" NLsteps="100000" reaStep="1000000" animate="0" >
 
-<item itemtype="LDR" CircId="LDR-1" mainComp="false" Show_id="false" Show_Val="false" Pos="-36,8" rotation="-90" hflip="1" vflip="1" label="LDR-1" idLabPos="-16,-24" labelrot="0" valLabPos="-16,30" valLabRot="0" Lux="500 Lux" Min_Lux="0 Lux" Max_Lux="1000 Lux" Dial_Step="0 Lux" Gamma="0.8582" R1="127410 Ω" Slider="false" Scale="1" />
+<item itemtype="LDR" CircId="LDR-1" mainComp="false" ShowProp="Lux" Show_id="false" Show_Val="true" Pos="-36,8" rotation="-90" hflip="1" vflip="1" label="LDR-1" idLabPos="-16,-24" labelrot="0" valLabPos="-10.9922,11.2209" valLabRot="90" Lux="500 Lux" Min_Lux="1e-12 Lux" Max_Lux="1000 Lux" Dial_Step="0 Lux" Gamma="0.8582" R1="127410 Ω" Slider="false" Scale="1" />
 
-<item itemtype="Resistor" CircId="Resistor-3" mainComp="false" ShowProp="Resistance" Show_id="false" Show_Val="true" Pos="-36,-44" rotation="90" hflip="1" vflip="1" label="Resistor-3" idLabPos="-16,-24" labelrot="0" valLabPos="-16,6" valLabRot="0" Resistance="100 Ω" />
+<item itemtype="Resistor" CircId="Resistor-3" mainComp="false" ShowProp="Resistance" Show_id="false" Show_Val="true" Pos="-36,-44" rotation="90" hflip="1" vflip="1" label="Resistor-3" idLabPos="-16,-24" labelrot="0" valLabPos="-2.64599,-10.6925" valLabRot="-90" Resistance="1000 Ω" />
 
 <item itemtype="Ground" CircId="Ground-5" mainComp="false" Show_id="false" Show_Val="false" Pos="-36,56" rotation="0" hflip="1" vflip="1" label="Ground-5" idLabPos="-16,8" labelrot="0" valLabPos="-16,20" valLabRot="0" />
 
-<item itemtype="Subcircuit" CircId="Uno-6" mainComp="false" Show_id="true" Show_Val="false" Pos="-232,-36" rotation="0" hflip="1" vflip="1" label="Uno-6" idLabPos="8.27023,-5.20064" labelrot="0" valLabPos="-16,20" valLabRot="0" Logic_Symbol="false">
-<mainCompProps MainCompId="6_mega328-109" Frequency="16 MHz" Auto_Load="false" saveEepr="true" SerialMon="-1" />
+<item itemtype="Subcircuit" CircId="Uno-6" mainComp="false" Show_id="true" Show_Val="false" Pos="-232,-36" rotation="0" hflip="1" vflip="1" label="Uno-6" idLabPos="8,-5" labelrot="0" valLabPos="-16,20" valLabRot="0" Logic_Symbol="false">
+<mainCompProps MainCompId="6_mega328-109" Frequency="16 MHz" Program="../.pio/build/uno/firmware.hex" Auto_Load="false" saveEepr="true" SerialMon="-1" />
 </item>
 
-<item itemtype="Rail" CircId="Rail-7" mainComp="false" ShowProp="Voltage" Show_id="false" Show_Val="true" Pos="-36,-84" rotation="90" hflip="1" vflip="1" label="Rail-7" idLabPos="-5,-10" labelrot="-90" valLabPos="-18.2476,4.79854" valLabRot="-90" Voltage="5 V" />
+<item itemtype="Rail" CircId="Rail-7" mainComp="false" ShowProp="Voltage" Show_id="false" Show_Val="true" Pos="-36,-84" rotation="90" hflip="1" vflip="1" label="Rail-7" idLabPos="-5,-10" labelrot="-90" valLabPos="-18,4" valLabRot="-90" Voltage="5 V" />
 
 <item itemtype="SerialPort" CircId="SerialPort-9" mainComp="false" Show_id="false" Show_Val="false" Pos="-192,-64" rotation="0" hflip="1" vflip="1" label="SerialPort-9" idLabPos="-20,-32" labelrot="0" valLabPos="-16,20" valLabRot="0" Baudrate="9600 _Bauds" DataBits="8 _Bits" StopBits="1 _Bits" SerialMon="false" />
 
