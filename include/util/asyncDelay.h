@@ -26,7 +26,9 @@ inline void AsyncDelay_c::restart(const unsigned long &delay)
 
 inline bool AsyncDelay_c::isExpired(void)
 {
-    return (TickType_t(xTaskGetTickCount() - _expires) >= 0);
+    bool resp = TickType_t(xTaskGetTickCount() - _expires) >= 0;
+    if(resp==true) repeat();
+    return(resp);
 }
 
 inline void AsyncDelay_c::repeat(void)
