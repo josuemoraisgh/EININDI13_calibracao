@@ -7,6 +7,7 @@
 #define BAUD_RATE 115200
 class WSerial_c : public ESPTelnet
 {
+  typedef void (*CallbackFunction)(String str);
 protected: 
   //uint16_t server_port = 0;
   void update(void);
